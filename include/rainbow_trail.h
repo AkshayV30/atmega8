@@ -3,22 +3,23 @@
 #include <stdint.h>
 #include <WS2812.h>
 
-// Rainbow gradient with a smooth global breathing envelope.
-class RainbowBreath {
+// Subpixel-smooth, bouncing rainbow head with an eased fading tail.
+class RainbowTrail {
 public:
-    RainbowBreath();
+    RainbowTrail();
     void begin();
     void update();
 
 private:
     WS2812 ledStrip_;
     uint32_t lastFrameMs_;
-    uint16_t breathPhase_;
+    uint16_t headPositionQ8_;
     uint16_t huePhase_;
+    int8_t direction_;
 
     void clearStrip();
-    uint8_t breathIntensity() const;
-    void renderFrame(uint8_t intensity);
+    void fadeAndClearInactivePixels();
+    void drawHead();
     static cRGB colorAtHue(uint16_t hue);
     static cRGB black();
 };

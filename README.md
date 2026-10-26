@@ -1,7 +1,7 @@
 # Robosapiens RSI-05 ATmega8 LED project
 
-Firmware for the RBoard ATmega8. The effect animates the first 10 WS2812 LEDs
-with a flowing full-spectrum gradient and a visible breathing cycle.
+Firmware for the RBoard ATmega8. A smooth bouncing rainbow head paints a fading
+trail across LEDs 0–30; LEDs 31–62 remain black.
 
 ## Project layout
 
@@ -10,32 +10,28 @@ include/
   led_config.h                   Board, LED count, timing, brightness ceiling
 src/
   main.cpp                       Arduino setup() and loop() entry points
-  rainbow_breath.cpp             Effect renderer
+  rainbow_trail.cpp              Subpixel head and fading-tail renderer
 include/
-  rainbow_breath.h               Effect class interface
+  rainbow_trail.h                Effect class interface
 tools/
   bootloadHID                    HID firmware uploader
-  build_bootloadhid.sh           Rebuilds the uploader from its archive
+  build_bootloadhid.py           Rebuilds the uploader from its archive
   README.md                      Upload and udev setup notes
 platformio.ini                   Board, toolchain, library, and upload settings
 SYSTEM_ARCHITECTURE.md           System and firmware flow diagram
 ```
 
-`src/main.cpp` starts and services `RainbowBreath`. The WS2812 framebuffer is
+`src/main.cpp` starts and services `RainbowTrail`. The WS2812 framebuffer is
 the effect's only per-pixel storage.
 
 ## Animation behavior
 
-- The firmware sends frames for all 63 pixels. LEDs 0–9 show the effect; LEDs
-  10–62 are black on every frame.
-- A full-spectrum gradient spans the active section. A traveling hue wave
-  bends the gradient to produce evolving color combinations without abrupt
-  palette changes.
-- A flash-resident sine lookup table and squared integer easing create a smooth
-  rise and fall without floating-point calculations. The pulse ranges from
-  about 19% to full configured output for a clearly visible inhale/exhale while
-  retaining a small nonzero trough. The breath takes roughly six seconds per
-  cycle.
+- The firmware sends frames for all 63 pixels. LEDs 0–30 are active; LEDs 31–62
+  are explicitly black on each frame.
+- The head moves in eighth-pixel increments and reverses at either end. The two
+  neighboring pixels are blended to smooth its motion.
+- Each frame fades existing trail pixels before drawing the moving rainbow head.
+- Output channels remain limited by `rboard::kMaximumOutputChannel`.
 - The 16 ms frame gate targets about 60 updates per second.
 
 ## Brightness and power
@@ -43,7 +39,7 @@ the effect's only per-pixel storage.
 The per-channel software ceiling is `rboard::kMaximumOutputChannel = 16`. Each
 RGB output is clamped by scaling to this value. For reference, NeoPixel-class
 RGB pixels are commonly estimated at up to 60 mA each at full-brightness white;
-10 active pixels at 16/255 white scale would be about 38 mA by linear scaling. Actual
+31 active pixels at 16/255 white scale would be about 117 mA by linear scaling. Actual
 strip current and the RBoard's VCC/USB power-path capacity vary, so this estimate
 is not a board safety rating. Use an appropriately rated, regulated 5 V supply
 if the board or USB port is not rated for the strip load, join grounds, and keep
@@ -69,7 +65,8 @@ runs `tools/bootloadHID` through the custom upload command. Do not use `sudo pio
 if USB access is denied, follow [tools/README.md](tools/README.md) and reconnect.
 
 Build without uploading with `pio run -e atmega8`. The uploader rebuild script is
-only needed when rebuilding `tools/bootloadHID`.
+only needed when rebuilding `tools/bootloadHID`. Run
+`python3 tools/build_bootloadhid.py` from the project root to rebuild it.
 
 ## Memory
 

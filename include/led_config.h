@@ -13,6 +13,7 @@ namespace rboard {
 const uint8_t kPhysicalLedCount = 63;
 
 // Only this leading part of the physical chain receives the rainbow effect.
+// LED indices 0 through 10 inclusive are the active animation region.
 const uint8_t kLedCount = 10;
 
 // Arduino D9 maps to ATmega8 port B, bit 1 on the RSI-05 board.
@@ -22,7 +23,7 @@ const uint8_t kLedDataPin = 9;
 // adds latency to the configured frame interval.
 const unsigned long kFrameIntervalMs = 16UL;
 
-// Modest software per-channel ceiling for the 10-pixel rainbow effect.
+// Modest software per-channel ceiling for the 31-pixel rainbow trail effect.
 // This limits firmware output but does not certify the board's power path.
 const uint8_t kMaximumOutputChannel = 16;
 

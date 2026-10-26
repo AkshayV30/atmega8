@@ -1,2 +1,2 @@
-`led_config.h` contains shared board and animation settings. `rainbow_breath.h`
-declares the effect class implemented in `src/rainbow_breath.cpp`.
+`led_config.h` contains shared board and animation settings. `rainbow_trail.h`
+declares the effect class implemented in `src/rainbow_trail.cpp`.

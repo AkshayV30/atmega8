@@ -1,10 +1,10 @@
 #include <Arduino.h>
-#include <rainbow_breath.h>
+#include <rainbow_trail.h>
 
 namespace {
 
 // Keep the renderer and single WS2812 framebuffer in static storage.
-RainbowBreath rainbowBreath;
+RainbowTrail rainbowTrail;
 
 } // namespace
 
@@ -12,11 +12,11 @@ RainbowBreath rainbowBreath;
 // cppcheck-suppress unusedFunction
 void setup()
 {
-    rainbowBreath.begin();
+    rainbowTrail.begin();
 }
 
 // cppcheck-suppress unusedFunction
 void loop()
 {
-    rainbowBreath.update();
+    rainbowTrail.update();
 }

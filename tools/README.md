@@ -15,7 +15,7 @@ sudo dnf install gcc make python3 libusb-compat-0.1-devel
 From this project folder, run:
 
 ```bash
-./tools/build_bootloadhid.sh
+python3 tools/build_bootloadhid.py
 ```
 
 ## Upload

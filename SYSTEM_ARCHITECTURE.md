@@ -1,6 +1,6 @@
 # System architecture
 
-This document describes the breathing rainbow firmware, PlatformIO build, and
+This document describes the bouncing rainbow-trail firmware, PlatformIO build, and
 HID upload path for the Robosapiens RSI-05 RBoard.
 
 ## Project and system diagram
@@ -11,8 +11,8 @@ flowchart LR
         IDE[VS Code + PlatformIO]
         PIO[platformio.ini\nArduino ATmega8, 12 MHz, C++11, -Os]
         Entry[src/main.cpp\nsetup and loop]
-        Config[include/led_config.h\n21 active / 63 physical LEDs, D9/PB1]
-        Effect[src/rainbow_breath.cpp\nRainbowBreath]
+        Config[include/led_config.h\n31 active / 63 physical LEDs, D9/PB1]
+        Effect[src/rainbow_trail.cpp\nRainbowTrail]
         Sine[64-entry sine table in flash]
         WsLibrary[light_ws2812 dependency]
         Build[ELF and Intel HEX build]
@@ -38,14 +38,14 @@ flowchart LR
     Uploader -->|USB HID| USB
 
     subgraph LEDs[LED output]
-        Breath[Rotating rainbow + eased breath\nfirst 21 pixels]
+        Breath[Bouncing rainbow head + fading trail\nfirst 31 pixels]
         Frame[63 x RGB frame\n189 bytes pixel data]
         DIN[WS2812 DIN]
-        Strip[First 21 animated; remaining 42 black]
+        Strip[First 31 animated; remaining 32 black]
         Breath --> Frame -->|timed one-wire data| DIN --> Strip
         PSU[Regulated 5 V supply] --> Strip
     end
-    MCU --> Breath
+    MCU --> Trail
     MCU -. common ground .- Strip
 ```
 
@@ -53,7 +53,7 @@ flowchart LR
 
 1. PlatformIO builds environment `atmega8` with the 12 MHz board clock and size
    optimization, producing an Intel HEX image within the 6144-byte app limit.
-2. It compiles `src/main.cpp`, `src/rainbow_breath.cpp`, Arduino core,
+2. It compiles `src/main.cpp`, `src/rainbow_trail.cpp`, Arduino core,
    and pinned `light_ws2812` dependency.
 3. The custom upload command runs `tools/bootloadHID -r "$SOURCE"`. The board
    enumerates as USB HID `16c0:05df`, not as a serial port.
@@ -63,17 +63,14 @@ flowchart LR
 ## Runtime effect
 
 1. Arduino startup initializes the MCU. `src/main.cpp` calls
-   `RainbowBreath::begin()` once and services `update()` from `loop()`. The
+   `RainbowTrail::begin()` once and services `update()` from `loop()`. The
    frame gate is 16 ms, targeting about 60 updates/s.
 2. `include/led_config.h` selects the active LED count in a 63-pixel chain,
    Arduino D9/PB1, and a per-channel software ceiling of 16/255.
-3. `rainbow_breath.cpp` evaluates an interpolated sine from flash to create a
-   smooth global brightness pulse with a deep, nonzero trough for a clear visual
-   breath. The full-strip hue gradient rotates independently of that cycle.
-4. The renderer applies the effect to the configured active LEDs, writes black
-   to the rest of the chain,
-   then clamps each RGB channel to the configured ceiling before `sync()` sends
-   the complete chain frame.
+3. `rainbow_trail.cpp` fades the previous frame, interpolates the subpixel head
+   over adjacent LEDs, and advances its rainbow hue.
+4. The renderer animates LEDs 0–30, writes black to LEDs 31–62, and sends the
+   full frame through the WS2812 library.
 
 ## Hardware and memory constraints
 
